@@ -7,11 +7,13 @@ use BotMan\BotMan\Messages\Incoming\Answer;
 use BotMan\BotMan\Messages\Outgoing\Question;
 use BotMan\BotMan\Messages\Outgoing\Actions\Button;
 use BotMan\BotMan\Messages\Conversations\Conversation;
+use Illuminate\Support\Facades\Log;
 
 class MainMenu extends Conversation
 {
     //Функция для выбора кафедры
     public function DepartmentsMenuView(){
+        $idDepartament = "";
          /*
                     Получить информацию о руководстве - TEXT, ожидается array
                     SELECT id, name 
@@ -43,15 +45,104 @@ class MainMenu extends Conversation
                 foreach($query as $key =>$value){
                     array_push($departaments_array, Button::create($value)->value($key));
                 }
-                $question = Question::create("Стартовое меню")
+                $question = Question::create("Кафедры")
             ->fallback('Unable to ask question')
             ->callbackId('ask_reason')
             ->addButtons($departaments_array);
-            $this->say('hello ask');
 
             return $this->ask($question, function (Answer $answer) {
-                //
+                if(!empty($answer)){
+                    $idDepartament = $answer->getValue();
+                    Log::info('111----------------111');
+                    Log::info($idDepartament);
+                    Log::info('111----------------222');
+                    $this->DepartmentMenuView($idDepartament);
+                }
+                else{
+                    $this->say('Неизвестная команда введите /start чтобы вернуться в меню');
+                }
             });
+    }
+
+
+    //Функция для просмотра меню одной кафедры
+    public function DepartmentMenuView($answerDepartament){
+        Log::info('111----------------+++++++111');
+        Log::info($answerDepartament);
+        Log::info('111----------------+++++++222');
+        //$answerDepartament (string) - хранится id кафедры
+        /*
+             SELECT *
+                    FROM departments
+                    WHERE id = $answerDepartament //конвертировать в int
+        */
+
+        /*
+
+        */
+        
+
+        $query_department ="";
+        $department_button_array = array();
+
+        $department_query_array = array(
+                'id' => 1,
+                'name' => "kafedra takaya",
+                'about' => "about kafedra",
+                'history' => "history kafedra",
+        );
+        foreach($department_query_array as $key =>$value){
+            if($key != 'id' and !empty($value) ){ //если это не id - его не надо отображать
+                                                 // и значение не пустое
+            array_push($department_button_array, Button::create($value)->value($key)); //то добавляем кнопки
+            }
+        }
+        $question_department = Question::create("Кафедра")
+            ->fallback('Unable to ask question')
+            ->callbackId('ask_reason')
+            ->addButtons($department_button_array);
+
+            return $this->ask($question_department, function (Answer $answer) {
+                if ($answer->isInteractiveMessageReply()) {
+                    if (!empty($answer)){
+                        Log::info("---------------------1");
+                        Log::info($answerDepartament);
+                        Log::info("---------------------2");
+                        $departamentId = $answerDepartament;
+                        $this->AboutDepartmentView($departamentId, $answer->getValue());
+                    } 
+                    else {
+                        $this->say('Неизвестная команда введите /start чтобы вернуться в меню');
+                    }
+                }
+            });
+
+    }
+
+    public function DepartmentAboutView($stringDepartamentName){
+        $this->say($stringDepartamentName);
+    }
+
+    public function AboutDepartmentView($id_departament, $string_departament_name){
+        
+        
+        //$id_departament (string) - id кафедры - хранится id кафедры
+        //$string_departament_name (string) - хранится колонка из таблицы базы данных, нужна для запроса
+        
+        
+        
+        $id_departament_int = (int)$id_departament; //получаем из Answer значение и конвертируем в int
+        $string_departament_name = $string_departament_name;
+        
+        
+        /*
+            SELECT FROM departament  $string_departament_name
+            WHERE id = $id_departament_int
+        */
+        
+       $result = $id_departament . " " . $string_departament_name;
+       $this->say($result);
+        
     }
 
     public function mainMenuView(){

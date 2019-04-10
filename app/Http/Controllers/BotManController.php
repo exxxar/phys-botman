@@ -41,8 +41,5 @@ class BotManController extends Controller
         $bot->startConversation(new MainMenu());
     }
 
-    public function cont(BotMan $bot)
-    {
-        $bot->reply('Controller');
-    }
+
 }
