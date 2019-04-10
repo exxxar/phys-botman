@@ -15,4 +15,8 @@ $botman->hears('Кирилл', function ($bot) {
     $bot->reply('Урезанный функционал....');
 });
 
+$botman->hears('hello world', function ($bot) {
+    $bot->reply('hello... hello..');
+});
+
 $botman->hears('Start conversation', BotManController::class.'@startConversation');
