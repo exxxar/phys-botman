@@ -10,6 +10,49 @@ use BotMan\BotMan\Messages\Conversations\Conversation;
 
 class MainMenu extends Conversation
 {
+    //Функция для выбора кафедры
+    public function DepartmentsMenuView(){
+         /*
+                    Получить информацию о руководстве - TEXT, ожидается array
+                    SELECT id, name 
+                    FROM departments
+                    WHERE 1
+                */
+
+                /*
+                    Создаем массив кнопок с названием кафедр
+                    id - уникальный индетефикатор кафедры
+                    name - назание кафедры
+                */
+
+                /*
+                    $departaments_array = array();
+                    foreach($query as $key =>$value){
+                                array_push($departaments_array, Button::create($value)->value($key));
+                            }
+                */
+            
+                $departaments_array = array();
+                $query = array(
+                    '1' => "кафедра 1",
+                    '2' => "кафедра 2",
+                    '3' => "кафедра 3",
+                    '4' => "кафедра 4",
+                );//заглушка для создания кнопок кафдры
+
+                foreach($query as $key =>$value){
+                    array_push($departaments_array, Button::create($value)->value($key));
+                }
+                $question = Question::create("Стартовое меню")
+            ->fallback('Unable to ask question')
+            ->callbackId('ask_reason')
+            ->addButtons($departaments_array);
+            $this->say('hello ask');
+
+            return $this->ask($question, function (Answer $answer) {
+                //
+            });
+    }
 
     public function mainMenuView(){
 
@@ -43,9 +86,9 @@ class MainMenu extends Conversation
                 
             } 
             elseif ($answer->getValue() === 'leadership') {
-                
+                //Если выбрали руководство
                 /* 
-                    Получить информацию о руководстве - TEXT, array
+                    Получить информацию о руководстве - TEXT, ожидается array
                     SELECT leadership 
                     FROM StaticData
                     WHERE 1
@@ -65,10 +108,17 @@ class MainMenu extends Conversation
                          $bot->reply($message);
                     }
                 */
-
-                $this->say('Должности');
+                $this->say('Кафедры');
                 
             }
+
+            
+            elseif ($answer->getValue() === 'departments') {
+                //Если выбрали кафедры
+                $this->DepartmentsMenuView();
+
+            }
+
             else {
                 $this->say('Неизвестная команда введите /start чтобы вернуться в меню');
             }
@@ -77,6 +127,7 @@ class MainMenu extends Conversation
         
     }
 
+    // Функция стартового меню
     public function askReason()
     {
         $question = Question::create("Стартовое меню")
