@@ -13,7 +13,7 @@ class MainMenu extends Conversation
 
     public function mainMenuView(){
 
-        $question_main = Question::create("Стартовое меню")
+        $question_main = Question::create("Главное меню")
         ->fallback('Unable to ask question')
         ->callbackId('ask_reason')
         ->addButtons([
@@ -42,7 +42,7 @@ class MainMenu extends Conversation
                 $this->say('О физтехе');
                 
             } 
-            if ($answer->getValue() === 'leadership') {
+            elseif ($answer->getValue() === 'leadership') {
                 
                 /* 
                     Получить информацию о руководстве - TEXT, array
@@ -70,7 +70,7 @@ class MainMenu extends Conversation
                 
             }
             else {
-                $this->say(Inspiring::quote());
+                $this->say('Неизвестная команда введите /start чтобы вернуться в меню');
             }
         }
     });
@@ -97,7 +97,7 @@ class MainMenu extends Conversation
                     $this->mainMenuView();
                 } 
 
-                if ($answer->getValue() === 'activity') {
+                elseif ($answer->getValue() === 'activity') {
 
                     /* 
                     Получить информацию о мероприятиях - TEXT
@@ -110,7 +110,7 @@ class MainMenu extends Conversation
                     
                 } 
 
-                if ($answer->getValue() === 'news') {
+                elseif ($answer->getValue() === 'news') {
 
                     /* 
                     Получить информацию о новостях - TEXT
@@ -122,7 +122,7 @@ class MainMenu extends Conversation
                     $this->say('Новости физ-теха');
                     
                 } 
-                if ($answer->getValue() === 'card') {
+                elseif ($answer->getValue() === 'card') {
 
                     /* 
                     Получить информацию о карте - TEXT
@@ -141,12 +141,14 @@ class MainMenu extends Conversation
                         $floor = $key['floor']; // номер этажа
                         $classrooms = $key['classrooms']; // Диапазон кабинетов
                         $floorclass = 'Этаж: ' . $floor . 'Кабинеты: ' . $classrooms;
+                        $this->say($floorclass);
                     }
                 */
                 
                     $this->say('Карта физ-теха');
                     
                 } 
+                
                 
                 else {
                     $this->say('Неизвестная команда');
