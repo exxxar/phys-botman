@@ -16,7 +16,11 @@ $botman->hears('Кирилл', function ($bot) {
 });
 
 $botman->hears('hello world', function ($bot) {
-    $bot->reply('hello... hello..');
+    $bot->reply('hello... heloo');
 });
 
-$botman->hears('Start conversation', BotManController::class.'@startConversation');
+$botman->hears('start', BotManController::class.'@startConversation');
+$botman->hears('/start', BotManController::class.'@menu');
+$botman->hears('cont', BotManController::class.'@cont');
+$botman->hears('/menu2', MainMenuController::class.'@menu');
+
