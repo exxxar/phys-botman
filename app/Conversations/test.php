@@ -45,18 +45,17 @@ class MainMenu extends Conversation
                 foreach($query as $key =>$value){
                     array_push($departaments_array, Button::create($value)->value($key));
                 }
-                array_push($departaments_array, Button::create('Назад')->value('back'));
                 $question = Question::create("Кафедры")
             ->fallback('Unable to ask question')
             ->callbackId('ask_reason')
             ->addButtons($departaments_array);
-            
 
             return $this->ask($question, function (Answer $answer) {
-                if($answer->getValue()==='back'){$this->mainMenuView();}
-                elseif(!empty($answer)){
+                if(!empty($answer)){
                     $idDepartament = $answer->getValue();
+                    Log::info('111----------------111');
                     Log::info($idDepartament);
+                    Log::info('111----------------222');
                     $this->DepartmentMenuView($idDepartament);
                 }
                 else{
@@ -65,99 +64,84 @@ class MainMenu extends Conversation
             });
     }
 
-    public function DepartmentMenuView($idDepartament){
+
+    //Функция для просмотра меню одной кафедры
+    public function DepartmentMenuView($answerDepartament){
+        Log::info('111----------------+++++++111');
+        Log::info($answerDepartament);
+        Log::info('111----------------+++++++222');
+        //$answerDepartament (string) - хранится id кафедры
+        /*
+             SELECT *
+                    FROM departments
+                    WHERE id = $answerDepartament //конвертировать в int
+        */
+
+        /*
+
+        */
+        
+
+        $query_department ="";
+        $department_button_array = array();
 
         $department_query_array = array(
-            'id' => 1,
-            'name' => "kafedra takaya",
-            'about' => "about kafedra",
-            'history' => "history kafedra",
-    );
-
-    $departament_buttons_array = array();
-
-    foreach($department_query_array as $key =>$value){
-        if($key != 'id' and !empty($value) ){ //если это не id - его не надо отображать
-                                             // и значение не пустое
-        array_push($departament_buttons_array, Button::create($value)->value($key));
+                'id' => 1,
+                'name' => "kafedra takaya",
+                'about' => "about kafedra",
+                'history' => "history kafedra",
+        );
+        foreach($department_query_array as $key =>$value){
+            if($key != 'id' and !empty($value) ){ //если это не id - его не надо отображать
+                                                 // и значение не пустое
+            array_push($department_button_array, Button::create($value)->value($key)); //то добавляем кнопки
+            }
         }
-    }
-    array_push($departament_buttons_array, Button::create('Назад')->value('back')); //добавляем кнопку назад
-    $question = Question::create("Кафедры")
+        $question_department = Question::create("Кафедра")
             ->fallback('Unable to ask question')
             ->callbackId('ask_reason')
-            ->addButtons($departament_buttons_array);
-            $cloneIdDepartament = $idDepartament;
-            return $this->ask($question, function (Answer $answer) use ($cloneIdDepartament)  {
+            ->addButtons($department_button_array);
+
+            return $this->ask($question_department, function (Answer $answer) {
                 if ($answer->isInteractiveMessageReply()) {
-                    if($answer->getValue()==='back'){$this->DepartmentsMenuView();}
-                    elseif (!empty($answer)){
-                    $tableName = $answer->getValue(); //название колонки выбранной кафедры
-                    $this->DepartmentView($cloneIdDepartament, $tableName );
-                    }
+                    if (!empty($answer)){
+                        Log::info("---------------------1");
+                        Log::info($answerDepartament);
+                        Log::info("---------------------2");
+                        $departamentId = $answerDepartament;
+                        $this->AboutDepartmentView($departamentId, $answer->getValue());
+                    } 
                     else {
                         $this->say('Неизвестная команда введите /start чтобы вернуться в меню');
                     }
                 }
-                });
+            });
 
-    
-
-        //$this->say($idDepartament);
     }
 
 
 
-    public function DepartmentView($idDepartament, $tableName){
-        //Фукнция отображения кафедры
-        $idDepartamentInt = (int)$idDepartament; //конвертируем полученный id в инт
+    public function AboutDepartmentView($id_departament, $string_departament_name){
+        
+        
+        //$id_departament (string) - id кафедры - хранится id кафедры
+        //$string_departament_name (string) - хранится колонка из таблицы базы данных, нужна для запроса
+        
+        
+        
+        $id_departament_int = (int)$id_departament; //получаем из Answer значение и конвертируем в int
+        $string_departament_name = $string_departament_name;
+        
         
         /*
-            SELECT . $tableName . 
-            FROM departaments
-            WHERE id = . $idDepartamentInt 
+            SELECT FROM departament  $string_departament_name
+            WHERE id = $id_departament_int
         */
-
-        $this->say('id: ' . $idDepartamentInt);
-        $this->say('Table Name:' . $tableName);
-
-        $result = "Сюда нужно поместить информацию";
-
-        $question_main = Question::create($result)
-        ->fallback('Unable to ask question')
-        ->callbackId('ask_reason')
-        ->addButtons([ Button::create('Назад')->value('back'),]);  
-
         
-        return $this->ask($question_main, function (Answer $answer) use ($idDepartament){
-            if ($answer->getValue() === 'back') { $this->DepartmentMenuView($idDepartament); }
-            else{ $this->say('Неизвестная команда введите /start чтобы вернуться в меню');}
-
-        });
-
-        //DepartmentMenuView($idDepartament)
-
-
+       $result = $id_departament . " " . $string_departament_name;
+       $this->say($result);
+        
     }
-
-
-    public function backToMenufunc(){
-    $question_main = Question::create("Нажмите чтобы вернуться")
-        ->fallback('Unable to ask question')
-        ->callbackId('ask_reason')
-        ->addButtons([ Button::create('Назад')->value('back'),]);  
-
-        
-        return $this->ask($question_main, function (Answer $answer) {
-            if ($answer->getValue() === 'back') { $this->mainMenuView(); }
-            else{ $this->say('Неизвестная команда введите /start чтобы вернуться в меню');}
-
-        });
-
-        
-
-    }
-
 
     public function mainMenuView(){
 
@@ -171,9 +155,9 @@ class MainMenu extends Conversation
             Button::create('Направления подготовки')->value('directions'),
             Button::create('Научная деятельность')->value('scienсу-activity'),
             Button::create('Контакты')->value('contact'),
-            Button::create('Назад')->value('back'),
         ]);
 
+    
 
     return $this->ask($question_main, function (Answer $answer) {
         if ($answer->isInteractiveMessageReply()) {
@@ -188,7 +172,6 @@ class MainMenu extends Conversation
                 */
 
                 $this->say('О физтехе');
-                $this->backToMenufunc();
                 
             } 
             elseif ($answer->getValue() === 'leadership') {
@@ -214,8 +197,7 @@ class MainMenu extends Conversation
                          $bot->reply($message);
                     }
                 */
-                $this->say('Функция руководтсво');
-                $this->backToMenufunc();
+                $this->say('Кафедры');
                 
             }
 
@@ -224,32 +206,6 @@ class MainMenu extends Conversation
                 //Если выбрали кафедры
                 $this->DepartmentsMenuView();
 
-            }
-
-            elseif ($answer->getValue() === 'directions') {
-                //Если выбрали напрвление подготовки
-                $this->say('Направление подготовки');
-                $this->backToMenufunc();
-
-            }
-
-            elseif ($answer->getValue() === 'scienсу-activity') {
-                //Если выбрали напрвление подготовки
-                $this->say('Научная деятельность');
-                $this->backToMenufunc();
-
-            }
-
-            elseif ($answer->getValue() === 'contact') {
-                //Если выбрали напрвление подготовки
-                $this->say('Контакты');
-                $this->backToMenufunc();
-
-            }
-
-            elseif ($answer->getValue() === 'back') {
-                //назад   
-                $this->askReason();
             }
 
             else {
@@ -313,7 +269,7 @@ class MainMenu extends Conversation
                     Карта физ-теха отдельная таблица
                     floor - этаж 
                     classrooms - диапазон формата 100-999 - CHAR(7)
-                    SELECT news
+                    SELECT news 
                     FROM StaticData
                     WHERE 1
                 */
@@ -328,8 +284,6 @@ class MainMenu extends Conversation
                         $this->say($floorclass);
                     }
                 */
-
-                
                 
                     $this->say('Карта физ-теха');
                     
