@@ -2,6 +2,8 @@
 
 namespace App\Conversations;
 
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Inspiring;
 use BotMan\BotMan\Messages\Incoming\Answer;
 use BotMan\BotMan\Messages\Outgoing\Question;
@@ -34,16 +36,19 @@ class MainMenu extends Conversation
                             }
                 */
             
-                $departaments_array = array();
-                $query = array(
-                    '1' => "кафедра 1",
-                    '2' => "кафедра 2",
-                    '3' => "кафедра 3",
-                    '4' => "кафедра 4",
-                );//заглушка для создания кнопок кафдры
+                //$departaments_array = array();
+                // $query = array(
+                //     '1' => "кафедра 1",
+                //     '2' => "кафедра 2",
+                //     '3' => "кафедра 3",
+                //     '4' => "кафедра 4",
+                // );//заглушка для создания кнопок кафдры
 
-                foreach($query as $key =>$value){
-                    array_push($departaments_array, Button::create($value)->value($key));
+                $query = DB::table('departments')->select('id', 'name')->get();
+                $departaments_array = array();
+
+                foreach($query as $key=>$value){
+                    array_push($departaments_array, Button::create($value->name)->value($value->id));
                 }
                 array_push($departaments_array, Button::create('Назад')->value('back'));
                 $question = Question::create("Кафедры")
@@ -118,6 +123,9 @@ class MainMenu extends Conversation
             WHERE id = . $idDepartamentInt 
         */
 
+        /** Получаем кафедру по Id */
+        $departament = DB::table('departments')->where('id', '=', $idDepartamentInt)->get();
+
         $this->say('id: ' . $idDepartamentInt);
         $this->say('Table Name:' . $tableName);
 
@@ -187,7 +195,9 @@ class MainMenu extends Conversation
                 
                 */
 
-                $this->say('О физтехе');
+                $aboutPhys = DB::table('staticData')->select('aboutPhys')->get();
+
+                $this->say($aboutPhys[0]->aboutPhys);
                 $this->backToMenufunc();
                 
             } 
@@ -201,20 +211,22 @@ class MainMenu extends Conversation
 
                 */
 
-                /*
-                    foreach($query as $key){
-                        $attachment = new Image($key['image']); // фото руководителя
-                        $name = $key['name']; // фио руководителя
-                        $name = $key['name'] . $key['secondname'] . $key['patronymic'];
-                        //если в таблице хранится раздельно
-                        $position = $key['position']; // должность
-                        $name_and_pos = 'ФИО: ' . $name . '\nДолжность' .  $position;
-                        $message = OutgoingMessage::create( $name_and_pos )
-                        ->withAttachment($attachment);
-                         $bot->reply($message);
-                    }
-                */
-                $this->say('Функция руководтсво');
+                $query = DB::table('leaderships')->get();
+
+                foreach($query as $key=>$value){
+                    //$attachment = new Image($value->image); // фото руководителя
+                    $name = $value->name; // фио руководителя
+                    //$name = $key['name'] . $key['secondname'] . $key['patronymic'];
+                    //если в таблице хранится раздельно
+                    $position = $value->position; // должность
+                    $name_and_pos = 'ФИО: ' . $name . '\nДолжность' .  $position;
+                    //$message = OutgoingMessage::create( $name_and_pos );
+                    //->withAttachment($attachment);
+                    $message = $name_and_pos;
+                        //$bot->reply($message);
+                        
+                    $this->say($message);
+                }
                 $this->backToMenufunc();
                 
             }
@@ -289,9 +301,21 @@ class MainMenu extends Conversation
                     FROM StaticData
                     WHERE 1
                 */
+                
+                    $this->say('Мероприятия физ-теха за 7 дней:');
+                    $lastWeek = Carbon::now()->subWeek();
+                    $activity = DB::table('events')->where('createAt', '>', $lastWeek)->get();
+                    $eventIndex = 1;
+                    foreach($activity as $key=>$value){
+                        $name = $value->name;
+                        $description = $value->description;
 
-                    $this->say('Мероприятия физ-теха');
-                    
+                        $this->say('Мероприятие №'.$eventIndex. '. '. $name);
+                        $event = 'Заголовок: ' . $name . '. Мероприятие:' .  $description;
+                            
+                        $this->say($event);
+                        $eventIndex++;
+                    }
                 } 
 
                 elseif ($answer->getValue() === 'news') {
@@ -302,8 +326,21 @@ class MainMenu extends Conversation
                     FROM StaticData
                     WHERE 1
                 */
-                
-                    $this->say('Новости физ-теха');
+                    
+                $this->say('Новости физ-теха за 7 дней:');
+                    $lastWeek = Carbon::now()->subWeek();
+                    $news = DB::table('news')->where('createAt', '>', $lastWeek)->get();
+                    $newsIndex = 1;
+                    foreach($news as $key=>$value){
+                        $name = $value->name;
+                        $description = $value->description;
+
+                        $this->say('Новость №'.$newsIndex. '. '. $name);
+                        $news = 'Заголовок: ' . $name . '. Новость:' .  $description;
+                            
+                        $this->say($news);
+                        $newsIndex++;
+                    }
                     
                 } 
                 elseif ($answer->getValue() === 'card') {
@@ -317,21 +354,16 @@ class MainMenu extends Conversation
                     FROM StaticData
                     WHERE 1
                 */
-
-
-
-                /*
-                    foreach($query as $key){
-                        $floor = $key['floor']; // номер этажа
-                        $classrooms = $key['classrooms']; // Диапазон кабинетов
-                        $floorclass = 'Этаж: ' . $floor . 'Кабинеты: ' . $classrooms;
-                        $this->say($floorclass);
-                    }
-                */
-
+                    
+                $floors = DB::table('physMap')->get();
                 
-                
-                    $this->say('Карта физ-теха');
+                $this->say('Карта физ-теха');
+                foreach($floors as $key=>$value){
+                    $floor = $value->floor; // номер этажа
+                    $classrooms = $value->classrooms; // Диапазон кабинетов
+                    $floorclass = 'Этаж: ' . $floor . '. Кабинеты: ' . $classrooms;
+                    $this->say($floorclass);
+                }
                     
                 } 
                 
