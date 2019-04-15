@@ -3,6 +3,8 @@
 namespace App\Conversations;
 
 use Carbon\Carbon;
+use BotMan\BotMan\Messages\Attachments\Image;
+use BotMan\BotMan\Messages\Outgoing\OutgoingMessage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Inspiring;
 use BotMan\BotMan\Messages\Incoming\Answer;
@@ -46,7 +48,6 @@ class MainMenu extends Conversation
 
                 $query = DB::table('departments')->select('id', 'name')->get();
                 $departaments_array = array();
-
                 foreach($query as $key=>$value){
                     array_push($departaments_array, Button::create($value->name)->value($value->id));
                 }
@@ -61,7 +62,7 @@ class MainMenu extends Conversation
                 if($answer->getValue()==='back'){$this->mainMenuView();}
                 elseif(!empty($answer)){
                     $idDepartament = $answer->getValue();
-                    Log::info($idDepartament);
+                    //Log::info($idDepartament);
                     $this->DepartmentMenuView($idDepartament);
                 }
                 else{
@@ -72,19 +73,56 @@ class MainMenu extends Conversation
 
     public function DepartmentMenuView($idDepartament){
 
-        $department_query_array = array(
-            'id' => 1,
-            'name' => "kafedra takaya",
-            'about' => "about kafedra",
-            'history' => "history kafedra",
-    );
 
+    //$query = DB::table('departments')->select('id', 'name')->get();
+   // $departament_query = DB::table('departments')->where('id', '=', $idDepartament)->get();
+
+    $departament_column_name = DB::getSchemaBuilder()->getColumnListing("departments");
+    //Log::info(gettype($departament_column_name));
+    //Log::info($departament_column_name);
+    $departament_query_array = (array)$departament_column_name;
+
+
+/*
+    Log::info($departament_query_array);
+    foreach($departament_query_array as $key=>$value){
+        Log::info($key);
+        Log::info($value);
+    }
+*/    
+
+    /*
+    foreach($departament_query_array as $key=>$value){
+        Log::info("key: ".$key);
+        Log::info($value);
+    }
+*/
+
+        $pseudonyms_array = array(
+            'id' => "Уникальный номер",
+            'name' => "Название",
+            'info' => "Информация",
+            'history' => "История",
+            'science' => "Наука",
+            'enrollee' => "Абитуриенту",
+            'specialty' => "Специальность",
+            'educationalMaterials' => "Учбеные материалы",
+            'electronicTextbook' => "Электронный учебник",
+            'contacts' => "Контакты",
+            'teachers' => "Преподаватели",
+            'courses' => "Курсы",
+            'radioPhysics' => "Радио-Физика",
+            'informationSecurity' => "Информационная безопасность",
+            'trainingDocuments' => "Учебные документы",
+            'olympiad' => "Олимпиады",
+            'cooperation' => "Содрудничество",
+        ); 
     $departament_buttons_array = array();
 
-    foreach($department_query_array as $key =>$value){
+    foreach($departament_query_array as $key =>$value){
         if($key != 'id' and !empty($value) ){ //если это не id - его не надо отображать
                                              // и значение не пустое
-        array_push($departament_buttons_array, Button::create($value)->value($key));
+        array_push($departament_buttons_array, Button::create($pseudonyms_array[$value])->value($value));
         }
     }
     array_push($departament_buttons_array, Button::create('Назад')->value('back')); //добавляем кнопку назад
@@ -124,12 +162,13 @@ class MainMenu extends Conversation
         */
 
         /** Получаем кафедру по Id */
-        $departament = DB::table('departments')->where('id', '=', $idDepartamentInt)->get();
-
+        $departament = DB::table('departments')->select($tableName)->where('id', '=', $idDepartamentInt)->get();
+        $departament_array = (array)$departament[0];
+        Log::info($departament_array[$tableName]);
         $this->say('id: ' . $idDepartamentInt);
         $this->say('Table Name:' . $tableName);
 
-        $result = "Сюда нужно поместить информацию";
+        $result = $departament_array[$tableName];
 
         $question_main = Question::create($result)
         ->fallback('Unable to ask question')
@@ -143,7 +182,6 @@ class MainMenu extends Conversation
 
         });
 
-        //DepartmentMenuView($idDepartament)
 
 
     }
@@ -165,6 +203,23 @@ class MainMenu extends Conversation
         
 
     }
+
+    public function backToStartfunc(){
+        $question_main = Question::create("Нажмите чтобы вернуться")
+            ->fallback('Unable to ask question')
+            ->callbackId('ask_reason')
+            ->addButtons([ Button::create('Назад')->value('back'),]);  
+    
+            
+            return $this->ask($question_main, function (Answer $answer) {
+                if ($answer->getValue() === 'back') { $this->askReason(); }
+                else{ $this->say('Неизвестная команда введите /start чтобы вернуться в меню');}
+    
+            });
+    
+            
+    
+        }
 
 
     public function mainMenuView(){
@@ -201,6 +256,20 @@ class MainMenu extends Conversation
                 $this->backToMenufunc();
                 
             } 
+            elseif ($answer->getValue() === 'test') {
+                $attachment = new Image('https://cs5.pikabu.ru/post_img/2014/05/16/6/1400226805_964578274.jpg', [
+                    'custom_payload' => true,
+                ]);
+                
+                // Build message object
+                $message = OutgoingMessage::create('This is my text')
+                            ->withAttachment($attachment);
+                
+                // Reply message object
+                $this->say($message);
+                
+            }
+
             elseif ($answer->getValue() === 'leadership') {
                 //Если выбрали руководство
                 /* 
@@ -214,18 +283,21 @@ class MainMenu extends Conversation
                 $query = DB::table('leaderships')->get();
 
                 foreach($query as $key=>$value){
-                    //$attachment = new Image($value->image); // фото руководителя
+                    $attachment = new Image($value->image, [
+                        'custom_payload' => true,
+                    ]); //фото руководителя
                     $name = $value->name; // фио руководителя
                     //$name = $key['name'] . $key['secondname'] . $key['patronymic'];
                     //если в таблице хранится раздельно
                     $position = $value->position; // должность
-                    $name_and_pos = 'ФИО: ' . $name . '\nДолжность' .  $position;
-                    //$message = OutgoingMessage::create( $name_and_pos );
-                    //->withAttachment($attachment);
+                    $name_and_pos = 'ФИО: ' . $name . "\nДолжность: " .  $position; //ФИО и должность
+
                     $message = $name_and_pos;
-                        //$bot->reply($message);
+                    $full_message = OutgoingMessage::create($message)
+                            ->withAttachment($attachment); //Генерируем текстовое сообщение с вложением
                         
-                    $this->say($message);
+                    $this->say($full_message);
+
                 }
                 $this->backToMenufunc();
                 
@@ -316,6 +388,8 @@ class MainMenu extends Conversation
                         $this->say($event);
                         $eventIndex++;
                     }
+
+                    $this->backToStartfunc(); 
                 } 
 
                 elseif ($answer->getValue() === 'news') {
@@ -341,6 +415,7 @@ class MainMenu extends Conversation
                         $this->say($news);
                         $newsIndex++;
                     }
+                    $this->backToStartfunc(); 
                     
                 } 
                 elseif ($answer->getValue() === 'card') {
@@ -359,17 +434,26 @@ class MainMenu extends Conversation
                 
                 $this->say('Карта физ-теха');
                 foreach($floors as $key=>$value){
+
+                    $attachment = new Image('https://cs5.pikabu.ru/post_img/2014/05/16/6/1400226805_964578274.jpg', [
+                        'custom_payload' => true,
+                    ]);//сюда ссылку на изображение
+                    
                     $floor = $value->floor; // номер этажа
                     $classrooms = $value->classrooms; // Диапазон кабинетов
                     $floorclass = 'Этаж: ' . $floor . '. Кабинеты: ' . $classrooms;
-                    $this->say($floorclass);
+
+                    $full_card_message = OutgoingMessage::create($floorclass)
+                            ->withAttachment($attachment);
+                    $this->say($full_card_message);
                 }
-                    
+                   $this->backToStartfunc(); 
                 } 
                 
                 
                 else {
                     $this->say('Неизвестная команда');
+                    $this->backToStartfunc();
                 }
             }
         });
