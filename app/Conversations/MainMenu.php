@@ -59,15 +59,22 @@ class MainMenu extends Conversation
             
 
             return $this->ask($question, function (Answer $answer) {
-                if($answer->getValue()==='back'){$this->mainMenuView();}
-                elseif(!empty($answer)){
-                    $idDepartament = $answer->getValue();
+                if ($answer->isInteractiveMessageReply()) { //если ответ - интерактивный(нажата кнопка)
+                if($answer->getValue()==='back'){$this->mainMenuView();} // если нажали назад - вернуться в меню
+                elseif(!empty($answer) and is_numeric($answer->getValue())){ // если ответ не пустой и является числом
+                    $idDepartament = $answer->getValue(); //получаем id кафедры
                     //Log::info($idDepartament);
-                    $this->DepartmentMenuView($idDepartament);
+                    $this->DepartmentMenuView($idDepartament); //передаем в функцию отображения информации о кафедры id кафедры
                 }
-                else{
-                    $this->say('Неизвестная команда введите /start чтобы вернуться в меню');
+                else{  
+                    $this->say('Неизвестная команда');
+                    $this->mainMenuView();
                 }
+            }
+            else{
+                $this->say('Неизвестная команда');
+                $this->mainMenuView();
+            }
             });
     }
 
@@ -132,15 +139,20 @@ class MainMenu extends Conversation
             ->addButtons($departament_buttons_array);
             $cloneIdDepartament = $idDepartament;
             return $this->ask($question, function (Answer $answer) use ($cloneIdDepartament)  {
-                if ($answer->isInteractiveMessageReply()) {
+                if ($answer->isInteractiveMessageReply()) { 
                     if($answer->getValue()==='back'){$this->DepartmentsMenuView();}
                     elseif (!empty($answer)){
                     $tableName = $answer->getValue(); //название колонки выбранной кафедры
                     $this->DepartmentView($cloneIdDepartament, $tableName );
                     }
                     else {
-                        $this->say('Неизвестная команда введите /start чтобы вернуться в меню');
+                        $this->say('Неизвестная команда');
+                        $this->DepartmentsMenuView();
                     }
+                }
+                else { 
+                    $this->say('Неизвестная команда');
+                    $this->DepartmentsMenuView();
                 }
                 });
 
@@ -152,7 +164,7 @@ class MainMenu extends Conversation
 
 
     public function DepartmentView($idDepartament, $tableName){
-        //Фукнция отображения кафедры
+        //Фукнция отображения кнопок информации о кафедре
         $idDepartamentInt = (int)$idDepartament; //конвертируем полученный id в инт
         
         /*
@@ -177,8 +189,11 @@ class MainMenu extends Conversation
 
         
         return $this->ask($question_main, function (Answer $answer) use ($idDepartament){
+            if ($answer->isInteractiveMessageReply()) { //если ответ - интерактивный(нажата кнопка)
             if ($answer->getValue() === 'back') { $this->DepartmentMenuView($idDepartament); }
-            else{ $this->say('Неизвестная команда введите /start чтобы вернуться в меню');}
+            else{ $this->say('Неизвестная команда'); $this->DepartmentMenuView($idDepartament);}
+            }
+            else{ $this->say('Неизвестная команда'); $this->DepartmentMenuView($idDepartament);}
 
         });
 
@@ -195,8 +210,10 @@ class MainMenu extends Conversation
 
         
         return $this->ask($question_main, function (Answer $answer) {
+            if ($answer->isInteractiveMessageReply()) {
             if ($answer->getValue() === 'back') { $this->mainMenuView(); }
-            else{ $this->say('Неизвестная команда введите /start чтобы вернуться в меню');}
+            else{ $this->say('Неизвестная команда'); $this->mainMenuView();}}
+            else{ $this->say('Неизвестная команда'); $this->mainMenuView();}
 
         });
 
@@ -212,8 +229,10 @@ class MainMenu extends Conversation
     
             
             return $this->ask($question_main, function (Answer $answer) {
+                if ($answer->isInteractiveMessageReply()) {
                 if ($answer->getValue() === 'back') { $this->askReason(); }
-                else{ $this->say('Неизвестная команда введите /start чтобы вернуться в меню');}
+                else{ $this->say('Неизвестная команда'); $this->askReason();}}
+                else{ $this->say('Неизвестная команда'); $this->askReason();}
     
             });
     
@@ -337,8 +356,14 @@ class MainMenu extends Conversation
             }
 
             else {
-                $this->say('Неизвестная команда введите /start чтобы вернуться в меню');
+                $this->say('Неизвестная команда');
+                $this->askReason();
             }
+        }
+
+        else { //Если ввели текст а не нажали на кнопку
+            $this->say('Неизвестная команда');
+            $this->askReason();
         }
     });
         
@@ -455,6 +480,10 @@ class MainMenu extends Conversation
                     $this->say('Неизвестная команда');
                     $this->backToStartfunc();
                 }
+            }
+            else {
+                $this->say('Неизвестная команда');
+                $this->askReason();
             }
         });
     }
