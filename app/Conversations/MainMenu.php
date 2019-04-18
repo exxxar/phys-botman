@@ -177,11 +177,12 @@ class MainMenu extends Conversation
         $departament = DB::table('departments')->select($tableName)->where('id', '=', $idDepartamentInt)->get();
         $departament_array = (array)$departament[0];
         Log::info($departament_array[$tableName]);
-        $this->say('id: ' . $idDepartamentInt);
-        $this->say('Table Name:' . $tableName);
-
+        // $this->say('id: ' . $idDepartamentInt);
+        // $this->say('Table Name:' . $tableName);
+        
         $result = $departament_array[$tableName];
 
+        //$this->say($result);
         $question_main = Question::create($result)
         ->fallback('Unable to ask question')
         ->callbackId('ask_reason')
@@ -331,21 +332,24 @@ class MainMenu extends Conversation
 
             elseif ($answer->getValue() === 'directions') {
                 //Если выбрали напрвление подготовки
-                $this->say('Направление подготовки');
+                $directions = DB::table('staticData')->select('directions')->get();
+                $this->say($directions[0]->directions);
                 $this->backToMenufunc();
 
             }
 
             elseif ($answer->getValue() === 'scienсу-activity') {
                 //Если выбрали напрвление подготовки
-                $this->say('Научная деятельность');
+                $scientificActivity = DB::table('staticData')->select('scientificActivity')->get();
+                $this->say($scientificActivity[0]->scientificActivity);
                 $this->backToMenufunc();
 
             }
 
             elseif ($answer->getValue() === 'contact') {
                 //Если выбрали напрвление подготовки
-                $this->say('Контакты');
+                $contacts = DB::table('staticData')->select('contacts')->get();
+                $this->say($contacts[0]->contacts);
                 $this->backToMenufunc();
 
             }
@@ -460,7 +464,7 @@ class MainMenu extends Conversation
                 $this->say('Карта физ-теха');
                 foreach($floors as $key=>$value){
 
-                    $attachment = new Image('https://cs5.pikabu.ru/post_img/2014/05/16/6/1400226805_964578274.jpg', [
+                    $attachment = new Image($value->image, [
                         'custom_payload' => true,
                     ]);//сюда ссылку на изображение
                     

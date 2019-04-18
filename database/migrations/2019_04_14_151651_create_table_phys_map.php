@@ -21,6 +21,8 @@ class CreateTablePhysMap extends Migration
              * формат : '100-999' 
              * */
             $table->string('classrooms', 7);
+            /** URL на карты */
+            $table->string('image');
         });
     }
 
