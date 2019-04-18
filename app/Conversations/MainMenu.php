@@ -2,6 +2,10 @@
 
 namespace App\Conversations;
 
+use Carbon\Carbon;
+use BotMan\BotMan\Messages\Attachments\Image;
+use BotMan\BotMan\Messages\Outgoing\OutgoingMessage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Inspiring;
 use BotMan\BotMan\Messages\Incoming\Answer;
 use BotMan\BotMan\Messages\Outgoing\Question;
@@ -34,16 +38,18 @@ class MainMenu extends Conversation
                             }
                 */
             
-                $departaments_array = array();
-                $query = array(
-                    '1' => "кафедра 1",
-                    '2' => "кафедра 2",
-                    '3' => "кафедра 3",
-                    '4' => "кафедра 4",
-                );//заглушка для создания кнопок кафдры
+                //$departaments_array = array();
+                // $query = array(
+                //     '1' => "кафедра 1",
+                //     '2' => "кафедра 2",
+                //     '3' => "кафедра 3",
+                //     '4' => "кафедра 4",
+                // );//заглушка для создания кнопок кафдры
 
-                foreach($query as $key =>$value){
-                    array_push($departaments_array, Button::create($value)->value($key));
+                $query = DB::table('departments')->select('id', 'name')->get();
+                $departaments_array = array();
+                foreach($query as $key=>$value){
+                    array_push($departaments_array, Button::create($value->name)->value($value->id));
                 }
                 array_push($departaments_array, Button::create('Назад')->value('back'));
                 $question = Question::create("Кафедры")
@@ -53,33 +59,77 @@ class MainMenu extends Conversation
             
 
             return $this->ask($question, function (Answer $answer) {
-                if($answer->getValue()==='back'){$this->mainMenuView();}
-                elseif(!empty($answer)){
-                    $idDepartament = $answer->getValue();
-                    Log::info($idDepartament);
-                    $this->DepartmentMenuView($idDepartament);
+                if ($answer->isInteractiveMessageReply()) { //если ответ - интерактивный(нажата кнопка)
+                if($answer->getValue()==='back'){$this->mainMenuView();} // если нажали назад - вернуться в меню
+                elseif(!empty($answer) and is_numeric($answer->getValue())){ // если ответ не пустой и является числом
+                    $idDepartament = $answer->getValue(); //получаем id кафедры
+                    //Log::info($idDepartament);
+                    $this->DepartmentMenuView($idDepartament); //передаем в функцию отображения информации о кафедры id кафедры
                 }
-                else{
-                    $this->say('Неизвестная команда введите /start чтобы вернуться в меню');
+                else{  
+                    $this->say('Неизвестная команда');
+                    $this->mainMenuView();
                 }
+            }
+            else{
+                $this->say('Неизвестная команда');
+                $this->mainMenuView();
+            }
             });
     }
 
     public function DepartmentMenuView($idDepartament){
 
-        $department_query_array = array(
-            'id' => 1,
-            'name' => "kafedra takaya",
-            'about' => "about kafedra",
-            'history' => "history kafedra",
-    );
 
+    //$query = DB::table('departments')->select('id', 'name')->get();
+   // $departament_query = DB::table('departments')->where('id', '=', $idDepartament)->get();
+
+    $departament_column_name = DB::getSchemaBuilder()->getColumnListing("departments");
+    //Log::info(gettype($departament_column_name));
+    //Log::info($departament_column_name);
+    $departament_query_array = (array)$departament_column_name;
+
+
+/*
+    Log::info($departament_query_array);
+    foreach($departament_query_array as $key=>$value){
+        Log::info($key);
+        Log::info($value);
+    }
+*/    
+
+    /*
+    foreach($departament_query_array as $key=>$value){
+        Log::info("key: ".$key);
+        Log::info($value);
+    }
+*/
+
+        $pseudonyms_array = array(
+            'id' => "Уникальный номер",
+            'name' => "Название",
+            'info' => "Информация",
+            'history' => "История",
+            'science' => "Наука",
+            'enrollee' => "Абитуриенту",
+            'specialty' => "Специальность",
+            'educationalMaterials' => "Учбеные материалы",
+            'electronicTextbook' => "Электронный учебник",
+            'contacts' => "Контакты",
+            'teachers' => "Преподаватели",
+            'courses' => "Курсы",
+            'radioPhysics' => "Радио-Физика",
+            'informationSecurity' => "Информационная безопасность",
+            'trainingDocuments' => "Учебные документы",
+            'olympiad' => "Олимпиады",
+            'cooperation' => "Содрудничество",
+        ); 
     $departament_buttons_array = array();
 
-    foreach($department_query_array as $key =>$value){
+    foreach($departament_query_array as $key =>$value){
         if($key != 'id' and !empty($value) ){ //если это не id - его не надо отображать
                                              // и значение не пустое
-        array_push($departament_buttons_array, Button::create($value)->value($key));
+        array_push($departament_buttons_array, Button::create($pseudonyms_array[$value])->value($value));
         }
     }
     array_push($departament_buttons_array, Button::create('Назад')->value('back')); //добавляем кнопку назад
@@ -89,15 +139,20 @@ class MainMenu extends Conversation
             ->addButtons($departament_buttons_array);
             $cloneIdDepartament = $idDepartament;
             return $this->ask($question, function (Answer $answer) use ($cloneIdDepartament)  {
-                if ($answer->isInteractiveMessageReply()) {
+                if ($answer->isInteractiveMessageReply()) { 
                     if($answer->getValue()==='back'){$this->DepartmentsMenuView();}
                     elseif (!empty($answer)){
                     $tableName = $answer->getValue(); //название колонки выбранной кафедры
                     $this->DepartmentView($cloneIdDepartament, $tableName );
                     }
                     else {
-                        $this->say('Неизвестная команда введите /start чтобы вернуться в меню');
+                        $this->say('Неизвестная команда');
+                        $this->DepartmentsMenuView();
                     }
+                }
+                else { 
+                    $this->say('Неизвестная команда');
+                    $this->DepartmentsMenuView();
                 }
                 });
 
@@ -109,7 +164,7 @@ class MainMenu extends Conversation
 
 
     public function DepartmentView($idDepartament, $tableName){
-        //Фукнция отображения кафедры
+        //Фукнция отображения кнопок информации о кафедре
         $idDepartamentInt = (int)$idDepartament; //конвертируем полученный id в инт
         
         /*
@@ -118,11 +173,16 @@ class MainMenu extends Conversation
             WHERE id = . $idDepartamentInt 
         */
 
-        $this->say('id: ' . $idDepartamentInt);
-        $this->say('Table Name:' . $tableName);
+        /** Получаем кафедру по Id */
+        $departament = DB::table('departments')->select($tableName)->where('id', '=', $idDepartamentInt)->get();
+        $departament_array = (array)$departament[0];
+        Log::info($departament_array[$tableName]);
+        // $this->say('id: ' . $idDepartamentInt);
+        // $this->say('Table Name:' . $tableName);
+        
+        $result = $departament_array[$tableName];
 
-        $result = "Сюда нужно поместить информацию";
-
+        //$this->say($result);
         $question_main = Question::create($result)
         ->fallback('Unable to ask question')
         ->callbackId('ask_reason')
@@ -130,12 +190,14 @@ class MainMenu extends Conversation
 
         
         return $this->ask($question_main, function (Answer $answer) use ($idDepartament){
+            if ($answer->isInteractiveMessageReply()) { //если ответ - интерактивный(нажата кнопка)
             if ($answer->getValue() === 'back') { $this->DepartmentMenuView($idDepartament); }
-            else{ $this->say('Неизвестная команда введите /start чтобы вернуться в меню');}
+            else{ $this->say('Неизвестная команда'); $this->DepartmentMenuView($idDepartament);}
+            }
+            else{ $this->say('Неизвестная команда'); $this->DepartmentMenuView($idDepartament);}
 
         });
 
-        //DepartmentMenuView($idDepartament)
 
 
     }
@@ -149,14 +211,35 @@ class MainMenu extends Conversation
 
         
         return $this->ask($question_main, function (Answer $answer) {
+            if ($answer->isInteractiveMessageReply()) {
             if ($answer->getValue() === 'back') { $this->mainMenuView(); }
-            else{ $this->say('Неизвестная команда введите /start чтобы вернуться в меню');}
+            else{ $this->say('Неизвестная команда'); $this->mainMenuView();}}
+            else{ $this->say('Неизвестная команда'); $this->mainMenuView();}
 
         });
 
         
 
     }
+
+    public function backToStartfunc(){
+        $question_main = Question::create("Нажмите чтобы вернуться")
+            ->fallback('Unable to ask question')
+            ->callbackId('ask_reason')
+            ->addButtons([ Button::create('Назад')->value('back'),]);  
+    
+            
+            return $this->ask($question_main, function (Answer $answer) {
+                if ($answer->isInteractiveMessageReply()) {
+                if ($answer->getValue() === 'back') { $this->askReason(); }
+                else{ $this->say('Неизвестная команда'); $this->askReason();}}
+                else{ $this->say('Неизвестная команда'); $this->askReason();}
+    
+            });
+    
+            
+    
+        }
 
 
     public function mainMenuView(){
@@ -187,10 +270,26 @@ class MainMenu extends Conversation
                 
                 */
 
-                $this->say('О физтехе');
+                $aboutPhys = DB::table('staticData')->select('aboutPhys')->get();
+
+                $this->say($aboutPhys[0]->aboutPhys);
                 $this->backToMenufunc();
                 
             } 
+            elseif ($answer->getValue() === 'test') {
+                $attachment = new Image('https://cs5.pikabu.ru/post_img/2014/05/16/6/1400226805_964578274.jpg', [
+                    'custom_payload' => true,
+                ]);
+                
+                // Build message object
+                $message = OutgoingMessage::create('This is my text')
+                            ->withAttachment($attachment);
+                
+                // Reply message object
+                $this->say($message);
+                
+            }
+
             elseif ($answer->getValue() === 'leadership') {
                 //Если выбрали руководство
                 /* 
@@ -201,20 +300,25 @@ class MainMenu extends Conversation
 
                 */
 
-                /*
-                    foreach($query as $key){
-                        $attachment = new Image($key['image']); // фото руководителя
-                        $name = $key['name']; // фио руководителя
-                        $name = $key['name'] . $key['secondname'] . $key['patronymic'];
-                        //если в таблице хранится раздельно
-                        $position = $key['position']; // должность
-                        $name_and_pos = 'ФИО: ' . $name . '\nДолжность' .  $position;
-                        $message = OutgoingMessage::create( $name_and_pos )
-                        ->withAttachment($attachment);
-                         $bot->reply($message);
-                    }
-                */
-                $this->say('Функция руководтсво');
+                $query = DB::table('leaderships')->get();
+
+                foreach($query as $key=>$value){
+                    $attachment = new Image($value->image, [
+                        'custom_payload' => true,
+                    ]); //фото руководителя
+                    $name = $value->name; // фио руководителя
+                    //$name = $key['name'] . $key['secondname'] . $key['patronymic'];
+                    //если в таблице хранится раздельно
+                    $position = $value->position; // должность
+                    $name_and_pos = 'ФИО: ' . $name . "\nДолжность: " .  $position; //ФИО и должность
+
+                    $message = $name_and_pos;
+                    $full_message = OutgoingMessage::create($message)
+                            ->withAttachment($attachment); //Генерируем текстовое сообщение с вложением
+                        
+                    $this->say($full_message);
+
+                }
                 $this->backToMenufunc();
                 
             }
@@ -228,21 +332,24 @@ class MainMenu extends Conversation
 
             elseif ($answer->getValue() === 'directions') {
                 //Если выбрали напрвление подготовки
-                $this->say('Направление подготовки');
+                $directions = DB::table('staticData')->select('directions')->get();
+                $this->say($directions[0]->directions);
                 $this->backToMenufunc();
 
             }
 
             elseif ($answer->getValue() === 'scienсу-activity') {
                 //Если выбрали напрвление подготовки
-                $this->say('Научная деятельность');
+                $scientificActivity = DB::table('staticData')->select('scientificActivity')->get();
+                $this->say($scientificActivity[0]->scientificActivity);
                 $this->backToMenufunc();
 
             }
 
             elseif ($answer->getValue() === 'contact') {
                 //Если выбрали напрвление подготовки
-                $this->say('Контакты');
+                $contacts = DB::table('staticData')->select('contacts')->get();
+                $this->say($contacts[0]->contacts);
                 $this->backToMenufunc();
 
             }
@@ -253,8 +360,14 @@ class MainMenu extends Conversation
             }
 
             else {
-                $this->say('Неизвестная команда введите /start чтобы вернуться в меню');
+                $this->say('Неизвестная команда');
+                $this->askReason();
             }
+        }
+
+        else { //Если ввели текст а не нажали на кнопку
+            $this->say('Неизвестная команда');
+            $this->askReason();
         }
     });
         
@@ -289,9 +402,23 @@ class MainMenu extends Conversation
                     FROM StaticData
                     WHERE 1
                 */
+                
+                    $this->say('Мероприятия физ-теха за 7 дней:');
+                    $lastWeek = Carbon::now()->subWeek();
+                    $activity = DB::table('events')->where('createAt', '>', $lastWeek)->get();
+                    $eventIndex = 1;
+                    foreach($activity as $key=>$value){
+                        $name = $value->name;
+                        $description = $value->description;
 
-                    $this->say('Мероприятия физ-теха');
-                    
+                        $this->say('Мероприятие №'.$eventIndex. '. '. $name);
+                        $event = 'Заголовок: ' . $name . '. Мероприятие:' .  $description;
+                            
+                        $this->say($event);
+                        $eventIndex++;
+                    }
+
+                    $this->backToStartfunc(); 
                 } 
 
                 elseif ($answer->getValue() === 'news') {
@@ -302,8 +429,22 @@ class MainMenu extends Conversation
                     FROM StaticData
                     WHERE 1
                 */
-                
-                    $this->say('Новости физ-теха');
+                    
+                $this->say('Новости физ-теха за 7 дней:');
+                    $lastWeek = Carbon::now()->subWeek();
+                    $news = DB::table('news')->where('createAt', '>', $lastWeek)->get();
+                    $newsIndex = 1;
+                    foreach($news as $key=>$value){
+                        $name = $value->name;
+                        $description = $value->description;
+
+                        $this->say('Новость №'.$newsIndex. '. '. $name);
+                        $news = 'Заголовок: ' . $name . '. Новость:' .  $description;
+                            
+                        $this->say($news);
+                        $newsIndex++;
+                    }
+                    $this->backToStartfunc(); 
                     
                 } 
                 elseif ($answer->getValue() === 'card') {
@@ -317,28 +458,36 @@ class MainMenu extends Conversation
                     FROM StaticData
                     WHERE 1
                 */
-
-
-
-                /*
-                    foreach($query as $key){
-                        $floor = $key['floor']; // номер этажа
-                        $classrooms = $key['classrooms']; // Диапазон кабинетов
-                        $floorclass = 'Этаж: ' . $floor . 'Кабинеты: ' . $classrooms;
-                        $this->say($floorclass);
-                    }
-                */
-
-                
-                
-                    $this->say('Карта физ-теха');
                     
+                $floors = DB::table('physMap')->get();
+                
+                $this->say('Карта физ-теха');
+                foreach($floors as $key=>$value){
+
+                    $attachment = new Image($value->image, [
+                        'custom_payload' => true,
+                    ]);//сюда ссылку на изображение
+                    
+                    $floor = $value->floor; // номер этажа
+                    $classrooms = $value->classrooms; // Диапазон кабинетов
+                    $floorclass = 'Этаж: ' . $floor . '. Кабинеты: ' . $classrooms;
+
+                    $full_card_message = OutgoingMessage::create($floorclass)
+                            ->withAttachment($attachment);
+                    $this->say($full_card_message);
+                }
+                   $this->backToStartfunc(); 
                 } 
                 
                 
                 else {
                     $this->say('Неизвестная команда');
+                    $this->backToStartfunc();
                 }
+            }
+            else {
+                $this->say('Неизвестная команда');
+                $this->askReason();
             }
         });
     }
