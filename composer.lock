@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f0d2dbc473e10612d9e38bd92b3e061c",
+    "content-hash": "0480db7af78d2a2e3e30e7a6d39b1db6",
     "packages": [
         {
             "name": "botman/botman",
@@ -1387,6 +1387,49 @@
                 "storage"
             ],
             "time": "2018-08-22T07:45:22+00:00"
+        },
+        {
+            "name": "miroc/laravel-adminer",
+            "version": "4.5.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/miroc/Laravel-Adminer.git",
+                "reference": "d80c552dedd0311571b9b45d95a7fc438445e914"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/miroc/Laravel-Adminer/zipball/d80c552dedd0311571b9b45d95a7fc438445e914",
+                "reference": "d80c552dedd0311571b9b45d95a7fc438445e914",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/support": "5.*",
+                "php": ">=5.4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Miroc\\LaravelAdminer\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Miroslav Svitok",
+                    "email": "mirosvitok@gmail.com"
+                }
+            ],
+            "description": "Adminer (by Jakub Vrana) wrapper for Laravel 5",
+            "keywords": [
+                "adminer",
+                "database",
+                "laravel5",
+                "management"
+            ],
+            "time": "2018-05-09T18:32:22+00:00"
         },
         {
             "name": "monolog/monolog",

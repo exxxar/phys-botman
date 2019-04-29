@@ -17,3 +17,5 @@ Route::get('/', function () {
 
 Route::match(['get', 'post'], '/botman', 'BotManController@handle');
 Route::get('/botman/tinker', 'BotManController@tinker');
+Route::any('adminer', '\Miroc\LaravelAdminer\AdminerController@index');
+//Route::any('adminer', '\Miroc\LaravelAdminer\AdminerAutologinController@index');
