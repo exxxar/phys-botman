@@ -18,33 +18,6 @@ class MainMenu extends Conversation
     //Функция для выбора кафедры
     public function DepartmentsMenuView(){
         $idDepartament = "";
-         /*
-                    Получить информацию о руководстве - TEXT, ожидается array
-                    SELECT id, name 
-                    FROM departments
-                    WHERE 1
-                */
-
-                /*
-                    Создаем массив кнопок с названием кафедр
-                    id - уникальный индетефикатор кафедры
-                    name - назание кафедры
-                */
-
-                /*
-                    $departaments_array = array();
-                    foreach($query as $key =>$value){
-                                array_push($departaments_array, Button::create($value)->value($key));
-                            }
-                */
-            
-                //$departaments_array = array();
-                // $query = array(
-                //     '1' => "кафедра 1",
-                //     '2' => "кафедра 2",
-                //     '3' => "кафедра 3",
-                //     '4' => "кафедра 4",
-                // );//заглушка для создания кнопок кафдры
 
                 $query = DB::table('departments')->select('id', 'name')->get();
                 $departaments_array = array();
@@ -63,7 +36,6 @@ class MainMenu extends Conversation
                 if($answer->getValue()==='back'){$this->mainMenuView();} // если нажали назад - вернуться в меню
                 elseif(!empty($answer) and is_numeric($answer->getValue())){ // если ответ не пустой и является числом
                     $idDepartament = $answer->getValue(); //получаем id кафедры
-                    //Log::info($idDepartament);
                     $this->DepartmentMenuView($idDepartament); //передаем в функцию отображения информации о кафедры id кафедры
                 }
                 else{  
@@ -79,31 +51,9 @@ class MainMenu extends Conversation
     }
 
     public function DepartmentMenuView($idDepartament){
-
-
-    //$query = DB::table('departments')->select('id', 'name')->get();
-   // $departament_query = DB::table('departments')->where('id', '=', $idDepartament)->get();
-
     $departament_column_name = DB::getSchemaBuilder()->getColumnListing("departments");
-    //Log::info(gettype($departament_column_name));
-    //Log::info($departament_column_name);
     $departament_query_array = (array)$departament_column_name;
 
-
-/*
-    Log::info($departament_query_array);
-    foreach($departament_query_array as $key=>$value){
-        Log::info($key);
-        Log::info($value);
-    }
-*/    
-
-    /*
-    foreach($departament_query_array as $key=>$value){
-        Log::info("key: ".$key);
-        Log::info($value);
-    }
-*/
 
         $pseudonyms_array = array(
             'id' => "Уникальный номер",
@@ -127,8 +77,11 @@ class MainMenu extends Conversation
     $departament_buttons_array = array();
 
     foreach($departament_query_array as $key =>$value){
-        if($key != 'id' and !empty($value) ){ //если это не id - его не надо отображать
-                                             // и значение не пустое
+        $idDepartamentInt = (int)$idDepartament; //конвертируем id из строки в число
+        $departament = DB::table('departments')->select($value)->where('id', '=', $idDepartamentInt)->get(); //получаем столбец из кафедр
+        $departament_array = (array)$departament[0]; // конфертирует ответ в массив и берем 1-ый элемент - значение столбца
+        if($key != 'id' and !empty($departament_array[$value]) ){ //если это не id - его не надо отображать
+                                             // и если значение столбца не пустое
         array_push($departament_buttons_array, Button::create($pseudonyms_array[$value])->value($value));
         }
     }
@@ -155,10 +108,6 @@ class MainMenu extends Conversation
                     $this->DepartmentsMenuView();
                 }
                 });
-
-    
-
-        //$this->say($idDepartament);
     }
 
 
@@ -166,23 +115,11 @@ class MainMenu extends Conversation
     public function DepartmentView($idDepartament, $tableName){
         //Фукнция отображения кнопок информации о кафедре
         $idDepartamentInt = (int)$idDepartament; //конвертируем полученный id в инт
-        
-        /*
-            SELECT . $tableName . 
-            FROM departaments
-            WHERE id = . $idDepartamentInt 
-        */
 
         /** Получаем кафедру по Id */
         $departament = DB::table('departments')->select($tableName)->where('id', '=', $idDepartamentInt)->get();
         $departament_array = (array)$departament[0];
-        Log::info($departament_array[$tableName]);
-        // $this->say('id: ' . $idDepartamentInt);
-        // $this->say('Table Name:' . $tableName);
-        
-        $result = $departament_array[$tableName];
-
-        //$this->say($result);
+        $result = $departament_array[$tableName]; // значение столбца
         $question_main = Question::create($result)
         ->fallback('Unable to ask question')
         ->callbackId('ask_reason')
