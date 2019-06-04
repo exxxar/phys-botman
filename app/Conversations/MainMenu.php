@@ -401,18 +401,27 @@ class MainMenu extends Conversation
                 $this->say('Карта физ-теха');
                 foreach($floors as $key=>$value){
 
-                    $attachment = new Image($value->image, [
+                    $attachment = new Image('../map/'.$value->image, [
                         'custom_payload' => true,
                     ]);//сюда ссылку на изображение
                     
                     $floor = $value->floor; // номер этажа
                     $classrooms = $value->classrooms; // Диапазон кабинетов
-                    $floorclass = 'Этаж: ' . $floor . '. Кабинеты: ' . $classrooms;
+                    $floorclass = 'Этаж тест: ' . $floor . '. Кабинеты: '.$floor."01-".$floor. $classrooms;
 
                     $full_card_message = OutgoingMessage::create($floorclass)
                             ->withAttachment($attachment);
+
+                    $question = Question::create('Посмотреть этаж?')
+                        ->addButtons(array(
+                            Button::create("Описание")->value('floor_desk '.$floor.' 0'),
+                            Button::create("Этаж №${$floor}")->value('floor_more '.$floor.' 0')
+                        ));
+
                     $this->say($full_card_message);
+                    $this->say($question);
                 }
+                    return;
                    $this->backToStartfunc(); 
                 } 
                 
